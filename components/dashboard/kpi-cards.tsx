@@ -1,0 +1,43 @@
+"use client"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Building2, Network, Users, BookOpen, TrendingUp, Award } from "lucide-react"
+
+const stats = [
+  { label: "Total Colleges", value: "24", change: "+3 this month", icon: Building2, trend: "up" },
+  { label: "Total Departments", value: "186", change: "+12 this month", icon: Network, trend: "up" },
+  { label: "Total Faculties", value: "1,240", change: "+45 this month", icon: Users, trend: "up" },
+  { label: "Total Courses", value: "3,560", change: "+120 this month", icon: BookOpen, trend: "up" },
+  { label: "Completion Rate", value: "78.5%", change: "+2.3% vs last month", icon: TrendingUp, trend: "up" },
+  { label: "Avg Quiz Score", value: "72.4", change: "+1.8 vs last month", icon: Award, trend: "up" },
+]
+
+const iconBgColors = [
+  "bg-primary/10 text-primary",
+  "bg-chart-2/15 text-chart-2",
+  "bg-chart-3/15 text-chart-3",
+  "bg-chart-4/15 text-chart-4",
+  "bg-success/15 text-success",
+  "bg-chart-5/15 text-chart-5",
+]
+
+export function KpiCards() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      {stats.map((stat, index) => (
+        <Card key={stat.label} className="rounded-xl border-border/60 shadow-sm transition-shadow hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">{stat.label}</CardTitle>
+            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${iconBgColors[index]}`}>
+              <stat.icon className="h-4 w-4" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+            <p className="mt-1 text-xs text-success">{stat.change}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
