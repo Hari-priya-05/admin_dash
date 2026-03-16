@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Pencil, Trash2, Calendar, Users, FileText } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Pencil, Trash2, Calendar, Users, FileText, ArrowLeft } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface QuizQuestion {
@@ -51,6 +52,29 @@ interface Course {
   passingScore: number
   createdAt?: string
   status?: "ongoing" | "completed" | "upcoming"
+}
+
+interface FacultyProgress {
+  id: string
+  name: string
+  email: string
+  progress: number
+  score?: number
+  status: "completed" | "in-progress" | "not-started"
+  completedDate?: string
+  modulesCompleted?: number
+}
+
+// Mock faculty progress data
+const getFacultyProgressForCourse = (courseId: string): FacultyProgress[] => {
+  const baseFacultyList: FacultyProgress[] = [
+    { id: "f1", name: "Dr. Alan Turing", email: "alan.turing@university.edu", progress: 100, score: 92, status: "completed", completedDate: "2024-02-28", modulesCompleted: 5 },
+    { id: "f2", name: "Dr. Grace Hopper", email: "grace.hopper@university.edu", progress: 85, score: 88, status: "in-progress", modulesCompleted: 4 },
+    { id: "f3", name: "Dr. Tim Berners-Lee", email: "tim.bernerslee@university.edu", progress: 60, status: "in-progress", modulesCompleted: 3 },
+    { id: "f4", name: "Dr. Ada Lovelace", email: "ada.lovelace@university.edu", progress: 30, status: "in-progress", modulesCompleted: 1 },
+    { id: "f5", name: "Dr. Dennis Ritchie", email: "dennis.ritchie@university.edu", progress: 100, score: 84, status: "completed", completedDate: "2024-03-15", modulesCompleted: 5 },
+  ]
+  return baseFacultyList
 }
 
 // Mock data from recent courses
@@ -133,6 +157,7 @@ export default function CreateCoursesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"all-courses" | "create">("all-courses")
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
   useEffect(() => {
     // Initialize with mock courses on first load
@@ -179,6 +204,157 @@ export default function CreateCoursesPage() {
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
     }
+  }
+
+  // Course Detail View
+  if (selectedCourse) {
+    const facultyProgress = getFacultyProgressForCourse(selectedCourse.id)
+    const sortedFaculty = [...facultyProgress].sort((a, b) => b.progress - a.progress)
+
+    return (
+      <DashboardShell>
+        <div className="space-y-6">
+          {/* Header with Back Button */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedCourse(null)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Courses
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-foreground">{selectedCourse.name}</h1>
+              <p className="text-sm text-muted-foreground mt-1">{selectedCourse.description}</p>
+            </div>
+          </div>
+
+          {/* Course Overview Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="border-border/60">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Total Faculty</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-foreground">{facultyProgress.length}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border/60">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Completed</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-foreground">{facultyProgress.filter(f => f.status === "completed").length}</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border/60">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-foreground">{facultyProgress.filter(f => f.status === "in-progress").length}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Course Details */}
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>Course Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground font-medium">Duration</p>
+                  <p className="text-foreground mt-1">{selectedCourse.duration || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground font-medium">Department</p>
+                  <p className="text-foreground mt-1">{selectedCourse.department || "All"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground font-medium">Passing Score</p>
+                  <p className="text-foreground mt-1">{selectedCourse.passingScore}%</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground font-medium">Modules</p>
+                  <p className="text-foreground mt-1">{selectedCourse.modules.length}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground font-medium">Created</p>
+                  <p className="text-foreground mt-1">{selectedCourse.createdAt ? new Date(selectedCourse.createdAt).toLocaleDateString() : "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground font-medium">Status</p>
+                  <Badge className={getStatusBadgeColor(selectedCourse.status)} style={{ display: 'inline-block' }}>
+                    {selectedCourse.status || "Unknown"}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Faculty Progress Ranking */}
+          <Card className="border-border/60">
+            <CardHeader>
+              <CardTitle>Faculty Progress Ranking</CardTitle>
+              <CardDescription>Ranked by completion progress</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {sortedFaculty.map((faculty, index) => (
+                <div key={faculty.id} className="space-y-2 pb-4 border-b border-border/50 last:border-0 last:pb-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium text-foreground">{faculty.name}</p>
+                          <p className="text-xs text-muted-foreground">{faculty.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right flex items-center gap-4">
+                      <div>
+                        {faculty.status === "completed" && (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                            Completed
+                          </Badge>
+                        )}
+                        {faculty.status === "in-progress" && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                            In Progress
+                          </Badge>
+                        )}
+                      </div>
+                      {faculty.score && (
+                        <div className="text-right min-w-fit">
+                          <p className="font-semibold text-foreground">{faculty.score}%</p>
+                          <p className="text-xs text-muted-foreground">Score</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="font-medium text-foreground">{faculty.progress}%</span>
+                    </div>
+                    <Progress value={faculty.progress} className="h-2" />
+                  </div>
+                  {faculty.modulesCompleted && (
+                    <p className="text-xs text-muted-foreground">Modules completed: {faculty.modulesCompleted}/{selectedCourse.modules.length}</p>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardShell>
+    )
   }
 
   if (isCreating) {
@@ -284,7 +460,8 @@ export default function CreateCoursesPage() {
                 {filteredCourses.map((course) => (
                   <Card
                     key={course.id}
-                    className="border-border/60 hover:shadow-md transition-shadow overflow-hidden"
+                    className="border-border/60 hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+                    onClick={() => setSelectedCourse(course)}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-4">

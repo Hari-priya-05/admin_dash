@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, ChevronDown, ChevronUp, Trash2, Edit2 } from "lucide-react"
 import { ModuleSection } from "./module-section"
 import { QuizBuilder } from "./quiz-builder"
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
 import {
   Dialog,
   DialogContent,
@@ -71,6 +72,15 @@ const mockFunTasks = [
   { id: "2", name: "Assignment 1: Coding Challenge" },
   { id: "3", name: "Project: Build App" },
   { id: "4", name: "Quiz 2: Advanced Topics" },
+]
+
+const departmentOptions: ComboboxOption[] = [
+  { value: "computer-science", label: "Computer Science" },
+  { value: "data-science", label: "Data Science" },
+  { value: "engineering", label: "Engineering" },
+  { value: "business", label: "Business" },
+  { value: "medicine", label: "Medicine" },
+  { value: "arts", label: "Arts" },
 ]
 
 export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilderProps) {
@@ -197,20 +207,13 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
             <Label htmlFor="department" className="text-sm font-medium">
               Department Assignment (Optional)
             </Label>
-            <select
-              id="department"
+            <Combobox
+              options={departmentOptions}
               value={course.department || ""}
-              onChange={(e) => setCourse({ ...course, department: e.target.value })}
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="">Select Department</option>
-              <option value="Computer Science">Computer Science</option>
-              <option value="Data Science">Data Science</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Business">Business</option>
-              <option value="Medicine">Medicine</option>
-              <option value="Arts">Arts</option>
-            </select>
+              onValueChange={(value) => setCourse({ ...course, department: value })}
+              placeholder="Select a department..."
+              searchPlaceholder="Search departments..."
+            />
             <p className="text-xs text-muted-foreground">Faculty from this department can be assigned to the course</p>
           </div>
 

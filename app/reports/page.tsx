@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ChevronRight, Building2, Network, Users } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { ChevronRight, Building2, Network, Users, ChevronDown } from "lucide-react"
 
 type DrillLevel = "colleges" | "departments" | "faculties"
 
@@ -352,29 +353,93 @@ export default function ReportsPage() {
               <CardTitle className="text-sm font-semibold text-foreground">Faculty Performance</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {facultyReports.map((faculty) => (
-                  <div
-                    key={faculty.name}
-                    className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted/30 cursor-pointer"
-                    onClick={() => handleFacultyClick(faculty)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground">{faculty.name}</p>
-                      <p className="text-xs text-muted-foreground">{faculty.courses} courses • {faculty.email}</p>
-                    </div>
-                    <div className="flex items-center gap-3 min-w-[200px]">
-                      <Progress value={faculty.completion} className="h-2 flex-1" />
-                      <span className="text-xs font-medium text-muted-foreground w-8">{faculty.completion}%</span>
-                    </div>
-                    <div className="text-sm font-medium text-foreground w-16 text-center">{faculty.avgScore}%</div>
-                    <Badge
-                      variant="outline"
-                      className={faculty.passed ? "border-success/30 bg-success/10 text-success" : "border-destructive/30 bg-destructive/10 text-destructive"}
-                    >
-                      {faculty.passed ? "Pass" : "Fail"}
-                    </Badge>
-                  </div>
+                  <Collapsible key={faculty.name} className="rounded-lg border border-border overflow-hidden">
+                    <CollapsibleTrigger className="w-full hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-4 p-4 w-full">
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="font-medium text-foreground">{faculty.name}</p>
+                          <p className="text-xs text-muted-foreground">{faculty.courses} courses • {faculty.email}</p>
+                        </div>
+                        <div className="flex items-center gap-3 min-w-[200px]">
+                          <Progress value={faculty.completion} className="h-2 flex-1" />
+                          <span className="text-xs font-medium text-muted-foreground w-8">{faculty.completion}%</span>
+                        </div>
+                        <div className="text-sm font-medium text-foreground w-16 text-center">{faculty.avgScore}%</div>
+                        <Badge
+                          variant="outline"
+                          className={faculty.passed ? "border-success/30 bg-success/10 text-success" : "border-destructive/30 bg-destructive/10 text-destructive"}
+                        >
+                          {faculty.passed ? "Pass" : "Fail"}
+                        </Badge>
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="border-t border-border/50 bg-muted/20 p-4 space-y-4">
+                      {/* Quick Stats */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="rounded bg-muted/50 p-3">
+                          <p className="text-xs text-muted-foreground">Completion</p>
+                          <p className="text-lg font-semibold text-foreground mt-1">{faculty.completion}%</p>
+                        </div>
+                        <div className="rounded bg-muted/50 p-3">
+                          <p className="text-xs text-muted-foreground">Avg Score</p>
+                          <p className="text-lg font-semibold text-foreground mt-1">{faculty.avgScore}%</p>
+                        </div>
+                        <div className="rounded bg-muted/50 p-3">
+                          <p className="text-xs text-muted-foreground">Status</p>
+                          <p className="text-sm font-semibold text-foreground mt-1">{faculty.passed ? "✓ Pass" : "✗ Fail"}</p>
+                        </div>
+                      </div>
+
+                      {/* Recent Activity Preview */}
+                      {faculty.activities && faculty.activities.length > 0 && (
+                        <div className="space-y-2 border-t border-border/30 pt-3">
+                          <p className="text-xs font-semibold text-foreground">Recent Activities</p>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {faculty.activities.slice(0, 3).map((activity) => (
+                              <div key={activity.id} className="text-xs text-muted-foreground flex items-center justify-between bg-background/50 p-2 rounded">
+                                <span>{activity.description}</span>
+                                {activity.score && <span className="font-medium">{activity.score}%</span>}
+                              </div>
+                            ))}
+                            {faculty.activities.length > 3 && (
+                              <p className="text-xs text-muted-foreground/70 p-2">+{faculty.activities.length - 3} more activities</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Course Summary */}
+                      {faculty.assignedCourses && faculty.assignedCourses.length > 0 && (
+                        <div className="space-y-2 border-t border-border/30 pt-3">
+                          <p className="text-xs font-semibold text-foreground">Assigned Courses ({faculty.assignedCourses.length})</p>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {faculty.assignedCourses.slice(0, 2).map((course) => (
+                              <div key={course.id} className="text-xs text-muted-foreground bg-background/50 p-2 rounded">
+                                <p className="font-medium text-foreground">{course.name}</p>
+                                {course.score && <p>Score: {course.score}%</p>}
+                              </div>
+                            ))}
+                            {faculty.assignedCourses.length > 2 && (
+                              <p className="text-xs text-muted-foreground/70 p-2">+{faculty.assignedCourses.length - 2} more courses</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* View Full Details Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleFacultyClick(faculty)}
+                        className="w-full gap-2 mt-2"
+                      >
+                        View Full Details
+                      </Button>
+                    </CollapsibleContent>
+                  </Collapsible>
                 ))}
               </div>
             </CardContent>
