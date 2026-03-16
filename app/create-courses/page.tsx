@@ -1,7 +1,7 @@
 "use client"
 
 import { DashboardShell } from "@/components/dashboard-shell"
-import { CourseBuilder } from "@/components/courses/course-builder"
+import { CourseBuilderModal } from "@/components/courses/course-builder-modal"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Pencil, Trash2, Calendar, Users, FileText, ArrowLeft } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface QuizQuestion {
   id: string
@@ -153,9 +152,8 @@ const mockRecentCourses: Course[] = [
 
 export default function CreateCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
-  const [isCreating, setIsCreating] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"all-courses" | "create">("all-courses")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
@@ -171,8 +169,7 @@ export default function CreateCoursesPage() {
     } else {
       setCourses([...courses, { ...course, createdAt: new Date().toISOString(), status: "upcoming" }])
     }
-    setIsCreating(false)
-    setActiveTab("all-courses")
+    setIsModalOpen(false)
   }
 
   const handleDeleteCourse = (courseId: string) => {
@@ -183,9 +180,7 @@ export default function CreateCoursesPage() {
 
   const handleEditCourse = (courseId: string) => {
     setEditingId(courseId)
-    setIsCreating(true)
-    setActiveTab("create")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    setIsModalOpen(true)
   }
 
   const filteredCourses = courses.filter((course) =>
@@ -357,44 +352,7 @@ export default function CreateCoursesPage() {
     )
   }
 
-  if (isCreating) {
-    return (
-      <DashboardShell>
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              {editingId && <Badge variant="outline">Editing</Badge>}
-              <h1 className="text-2xl font-bold text-foreground">
-                {editingId ? "Edit Course" : "Create New Course"}
-              </h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Build your course with modules, videos, tasks, and department assignment
-            </p>
-          </div>
 
-          <CourseBuilder
-            courseId={editingId || undefined}
-            initialCourse={editingId ? courses.find((c) => c.id === editingId) : undefined}
-            onSave={handleSaveCourse}
-          />
-
-          <div className="flex justify-start">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsCreating(false)
-                setEditingId(null)
-                setActiveTab("all-courses")
-              }}
-            >
-              Back to Courses
-            </Button>
-          </div>
-        </div>
-      </DashboardShell>
-    )
-  }
 
   return (
     <DashboardShell>
@@ -409,185 +367,165 @@ export default function CreateCoursesPage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all-courses" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              All Courses ({courses.length})
-            </TabsTrigger>
-            <TabsTrigger value="create" className="flex items-center gap-2">
-              Create New Course
-            </TabsTrigger>
-          </TabsList>
+        {/* Search and Create Button */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search courses..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9"
+          />
+          <Button
+            onClick={() => {
+              setEditingId(null)
+              setIsModalOpen(true)
+            }}
+            className="gap-2"
+          >
+            + New Course
+          </Button>
+        </div>
 
-          {/* All Courses Tab */}
-          <TabsContent value="all-courses" className="space-y-4">
-            {/* Search */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Search courses..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9"
-              />
-              <Button
-                onClick={() => {
-                  setEditingId(null)
-                  setIsCreating(true)
-                  setActiveTab("create")
-                }}
-                className="gap-2"
-              >
-                + New Course
-              </Button>
-            </div>
+        {/* Courses List */}
+        {filteredCourses.length === 0 ? (
+          <Card className="border-border/60">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="text-center space-y-2">
+                <p className="text-muted-foreground font-medium">No courses found</p>
+                <p className="text-sm text-muted-foreground/70">
+                  Try adjusting your search or create a new course
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {filteredCourses.map((course) => {
+              const facultyProgress = getFacultyProgressForCourse(course.id)
+              const completedCount = facultyProgress.filter(f => f.status === "completed").length
+              const overallProgress = Math.round(facultyProgress.reduce((sum, f) => sum + f.progress, 0) / facultyProgress.length)
 
-            {/* Courses List */}
-            {filteredCourses.length === 0 ? (
-              <Card className="border-border/60">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="text-center space-y-2">
-                    <p className="text-muted-foreground font-medium">No courses found</p>
-                    <p className="text-sm text-muted-foreground/70">
-                      Try adjusting your search or create a new course
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {filteredCourses.map((course) => (
-                  <Card
-                    key={course.id}
-                    className="border-border/60 hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
-                    onClick={() => setSelectedCourse(course)}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg">{course.name}</CardTitle>
-                            <Badge className={getStatusBadgeColor(course.status)}>
-                              {course.status || "Unknown"}
-                            </Badge>
-                          </div>
-                          <CardDescription className="line-clamp-2">
-                            {course.description || "No description"}
-                          </CardDescription>
+              return (
+                <Card
+                  key={course.id}
+                  className="border-border/60 hover:shadow-md transition-shadow overflow-hidden cursor-pointer"
+                  onClick={() => setSelectedCourse(course)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">{course.name}</CardTitle>
+                          <Badge className={getStatusBadgeColor(course.status)}>
+                            {course.status || "Unknown"}
+                          </Badge>
                         </div>
+                        <CardDescription className="line-clamp-2">
+                          {course.description || "No description"}
+                        </CardDescription>
                       </div>
-                    </CardHeader>
+                    </div>
+                  </CardHeader>
 
-                    <CardContent className="pb-4 space-y-4">
-                      {/* Course Meta Info */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                  <CardContent className="pb-4 space-y-4">
+                    {/* Course Meta Info */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <FileText className="h-4 w-4" />
+                        <span>{course.modules.length} Module{course.modules.length !== 1 ? "s" : ""}</span>
+                      </div>
+                      {course.duration && (
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <FileText className="h-4 w-4" />
-                          <span>{course.modules.length} Module{course.modules.length !== 1 ? "s" : ""}</span>
-                        </div>
-                        {course.duration && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
-                            <span>Duration: {course.duration}</span>
-                          </div>
-                        )}
-                        {course.department && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{course.department}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Module Summary */}
-                      <div className="space-y-2 border-t border-border/50 pt-4">
-                        <p className="text-xs font-medium text-foreground">Modules:</p>
-                        <div className="space-y-1 max-h-24 overflow-y-auto">
-                          {course.modules.slice(0, 3).map((module) => (
-                            <div
-                              key={module.id}
-                              className="text-xs text-muted-foreground flex items-center gap-2 pl-2"
-                            >
-                              <span className="font-medium">{module.name}</span>
-                              <span>•</span>
-                              <span>{module.videos.length} video{module.videos.length !== 1 ? "s" : ""}</span>
-                              {module.quizzes && module.quizzes.length > 0 && (
-                                <>
-                                  <span>•</span>
-                                  <span>{module.quizzes.length} quiz{module.quizzes.length !== 1 ? "zes" : ""}</span>
-                                </>
-                              )}
-                            </div>
-                          ))}
-                          {course.modules.length > 3 && (
-                            <p className="text-xs text-muted-foreground/70 pl-2">
-                              +{course.modules.length - 3} more module{course.modules.length - 3 !== 1 ? "s" : ""}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Final Quiz Info */}
-                      {course.finalQuiz && (
-                        <div className="text-xs text-muted-foreground flex items-center gap-2 px-2 py-2 bg-muted/30 rounded">
-                          <span className="font-medium">✓ Final Quiz:</span>
-                          <span>{course.finalQuiz.questions.length} question{course.finalQuiz.questions.length !== 1 ? "s" : ""}</span>
+                          <Calendar className="h-4 w-4" />
+                          <span>Duration: {course.duration}</span>
                         </div>
                       )}
-                    </CardContent>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 justify-end border-t border-border/50 bg-muted/30 px-6 py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => handleEditCourse(course.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1 text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteCourse(course.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
+                      {course.department && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          <span>{course.department}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        <span>{facultyProgress.length} Faculty</span>
+                      </div>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
 
-          {/* Create Course Tab */}
-          <TabsContent value="create" className="space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground mb-2">Create New Course</h2>
-              <p className="text-sm text-muted-foreground">Fill in the details below to create a new course</p>
-            </div>
+                    {/* Course Progress Section */}
+                    <div className="space-y-3 border-t border-border/50 pt-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-foreground">Course Progress</p>
+                        <span className="text-xs font-medium text-muted-foreground">{completedCount}/{facultyProgress.length} Completed</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Overall Completion</span>
+                          <span className="font-medium text-foreground">{overallProgress}%</span>
+                        </div>
+                        <Progress value={overallProgress} className="h-2" />
+                      </div>
+                    </div>
 
-            <CourseBuilder
-              onSave={handleSaveCourse}
-            />
+                    {/* Faculty Summary */}
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/30 rounded-lg p-3">
+                      <div>
+                        <p className="text-muted-foreground font-medium">Completed</p>
+                        <p className="text-lg font-semibold text-foreground mt-1">{completedCount}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-medium">In Progress</p>
+                        <p className="text-lg font-semibold text-foreground mt-1">{facultyProgress.filter(f => f.status === "in-progress").length}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground font-medium">Not Started</p>
+                        <p className="text-lg font-semibold text-foreground mt-1">{facultyProgress.filter(f => f.status === "not-started").length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
 
-            <div className="flex justify-start">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setActiveTab("all-courses")
-                }}
-              >
-                Back to All Courses
-              </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
+                  {/* Actions */}
+                  <div className="flex gap-2 justify-end border-t border-border/50 bg-muted/30 px-6 py-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditCourse(course.id)
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-destructive hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteCourse(course.id)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Course Builder Modal */}
+      <CourseBuilderModal
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSave={handleSaveCourse}
+        editingCourse={editingId ? courses.find((c) => c.id === editingId) : undefined}
+        editingId={editingId}
+      />
     </DashboardShell>
   )
 }
