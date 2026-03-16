@@ -15,6 +15,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { Search } from "lucide-react"
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell, Legend,
+} from "recharts"
 
 const faculties = [
   { id: 1, name: "Dr. Alan Turing", initials: "AT", email: "turing@mit.edu", department: "Computer Science", courses: 5, progress: 92, status: "Active" },
@@ -30,6 +34,37 @@ const faculties = [
 ]
 
 const deptOptions = ["All Departments", "Computer Science", "Electrical Engineering", "Physics", "Mathematics", "Biology", "Business Administration", "Literature", "Mechanical Engineering", "Chemistry"]
+
+// Chart data based on faculty data
+const facultyPerformanceData = [
+  { faculty: "Dr. Turing", performance: 92 },
+  { faculty: "Dr. Tesla", performance: 85 },
+  { faculty: "Dr. Feynman", performance: 78 },
+  { faculty: "Dr. Newton", performance: 95 },
+  { faculty: "Dr. Darwin", performance: 45 },
+  { faculty: "Prof. Drucker", performance: 88 },
+]
+
+const courseProgressData = [
+  { month: "Jan", courses: 32, students: 450, completion: 62 },
+  { month: "Feb", courses: 35, students: 480, completion: 68 },
+  { month: "Mar", courses: 38, students: 520, completion: 72 },
+  { month: "Apr", courses: 40, students: 560, completion: 75 },
+  { month: "May", courses: 42, students: 600, completion: 78 },
+  { month: "Jun", courses: 45, students: 640, completion: 82 },
+]
+
+const statusDistribution = [
+  { name: "Active", value: 8 },
+  { name: "On Leave", value: 1 },
+  { name: "Inactive", value: 1 },
+]
+
+const PIE_COLORS = [
+  "oklch(0.60 0.18 155)",
+  "oklch(0.75 0.16 75)",
+  "oklch(0.577 0.245 27.325)",
+]
 
 export default function FacultiesPage() {
   const [search, setSearch] = useState("")
@@ -48,6 +83,96 @@ export default function FacultiesPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Faculties</h1>
           <p className="mt-1 text-sm text-muted-foreground">View and manage faculty members</p>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {/* Faculty Performance Chart */}
+          <Card className="rounded-xl border-border/60 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold text-foreground">Faculty Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={facultyPerformanceData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.90 0.01 260)" />
+                  <XAxis dataKey="faculty" tick={{ fontSize: 11 }} stroke="oklch(0.50 0.02 260)" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="oklch(0.50 0.02 260)" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "oklch(1 0 0)",
+                      border: "1px solid oklch(0.90 0.01 260)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Bar dataKey="performance" fill="oklch(0.51 0.18 255)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Course Progress Chart */}
+          <Card className="rounded-xl border-border/60 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold text-foreground">Course Progress Trend</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={courseProgressData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.90 0.01 260)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="oklch(0.50 0.02 260)" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="oklch(0.50 0.02 260)" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "oklch(1 0 0)",
+                      border: "1px solid oklch(0.90 0.01 260)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                  <Line type="monotone" dataKey="courses" stroke="oklch(0.51 0.18 255)" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="monotone" dataKey="completion" stroke="oklch(0.65 0.18 165)" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Faculty Status Distribution */}
+          <Card className="rounded-xl border-border/60 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold text-foreground">Faculty Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={statusDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {statusDistribution.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "oklch(1 0 0)",
+                      border: "1px solid oklch(0.90 0.01 260)",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}

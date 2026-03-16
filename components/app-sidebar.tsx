@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
-  Users,
   BookOpen,
   BarChart3,
   Settings,
@@ -12,21 +11,34 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { useTheme } from "next-themes"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Faculties", href: "/faculties", icon: Users },
   { label: "Create Courses", href: "/create-courses", icon: BookOpen },
   { label: "Reports", href: "/reports", icon: BarChart3 },
+  { label: "Recent Courses", href: "/recent-courses", icon: BarChart3 },
   { label: "Settings", href: "/settings", icon: Settings },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   return (
     <aside
@@ -73,8 +85,43 @@ export function AppSidebar() {
         </ul>
       </nav>
 
-      {/* Logout and Collapse */}
+      {/* Logout and Theme Toggle */}
       <div className="border-t border-sidebar-border p-3 space-y-2">
+        {/* Theme Toggle */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Moon className="h-[18px] w-[18px] shrink-0" />
+              ) : theme === "light" ? (
+                <Sun className="h-[18px] w-[18px] shrink-0" />
+              ) : (
+                <Monitor className="h-[18px] w-[18px] shrink-0" />
+              )}
+              {!collapsed && <span>Theme</span>}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align={collapsed ? "center" : "start"} className="w-40">
+            <DropdownMenuLabel>Theme</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setTheme("light")} className={theme === "light" ? "bg-sidebar-accent" : ""}>
+              <Sun className="mr-2 h-4 w-4" />
+              <span>Light</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("dark")} className={theme === "dark" ? "bg-sidebar-accent" : ""}>
+              <Moon className="mr-2 h-4 w-4" />
+              <span>Dark</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("system")} className={theme === "system" ? "bg-sidebar-accent" : ""}>
+              <Monitor className="mr-2 h-4 w-4" />
+              <span>System</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {/* Logout Button */}
         <button
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"

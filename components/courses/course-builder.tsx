@@ -13,7 +13,9 @@ import { ModuleSection } from "./module-section"
 interface Module {
   id: string
   name: string
+  description: string
   videos: Video[]
+  quizzes: Quiz[]
 }
 
 interface Video {
@@ -23,12 +25,30 @@ interface Video {
   funTaskId?: string
 }
 
+interface Quiz {
+  id: string
+  title: string
+  questions: QuizQuestion[]
+}
+
+interface QuizQuestion {
+  id: string
+  question: string
+  imageUrl?: string
+  options: string[]
+  correctAnswer: number
+}
+
 interface Course {
   id: string
   name: string
+  description: string
   instructions: string
+  dueDate?: string
   termsAccepted: boolean
   modules: Module[]
+  finalQuiz?: Quiz
+  passingScore: number
 }
 
 interface CourseBuilderProps {
@@ -47,9 +67,12 @@ export function CourseBuilder({ courseId, onSave }: CourseBuilderProps) {
   const [course, setCourse] = useState<Course>({
     id: courseId || `course-${Date.now()}`,
     name: "",
+    description: "",
     instructions: "",
+    dueDate: "",
     termsAccepted: false,
     modules: [],
+    passingScore: 70,
   })
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
@@ -121,6 +144,52 @@ export function CourseBuilder({ courseId, onSave }: CourseBuilderProps) {
               placeholder="Enter course name"
               value={course.name}
               onChange={(e) => setCourse({ ...course, name: e.target.value })}
+              className="h-10"
+            />
+          </div>
+
+          {/* Course Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium">
+              Course Description
+            </Label>
+            <Textarea
+              id="description"
+              placeholder="Enter a brief description of the course..."
+              value={course.description}
+              onChange={(e) => setCourse({ ...course, description: e.target.value })}
+              rows={2}
+              className="resize-none"
+            />
+          </div>
+
+          {/* Due Date */}
+          <div className="space-y-2">
+            <Label htmlFor="due-date" className="text-sm font-medium">
+              Course Due Date (Optional)
+            </Label>
+            <Input
+              id="due-date"
+              type="date"
+              value={course.dueDate}
+              onChange={(e) => setCourse({ ...course, dueDate: e.target.value })}
+              className="h-10"
+            />
+            <p className="text-xs text-muted-foreground">Course will automatically close after the due date</p>
+          </div>
+
+          {/* Passing Score */}
+          <div className="space-y-2">
+            <Label htmlFor="passing-score" className="text-sm font-medium">
+              Passing Score for Certificate (%)
+            </Label>
+            <Input
+              id="passing-score"
+              type="number"
+              min="0"
+              max="100"
+              value={course.passingScore}
+              onChange={(e) => setCourse({ ...course, passingScore: parseInt(e.target.value) || 70 })}
               className="h-10"
             />
           </div>
