@@ -4,31 +4,22 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
-  Building2,
-  Network,
   Users,
   BookOpen,
-  Layers,
-  HelpCircle,
-  Gamepad2,
   BarChart3,
   Settings,
   GraduationCap,
   ChevronLeft,
   ChevronRight,
+  LogOut,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Colleges", href: "/colleges", icon: Building2 },
-  { label: "Departments", href: "/departments", icon: Network },
   { label: "Faculties", href: "/faculties", icon: Users },
-  { label: "Courses", href: "/courses", icon: BookOpen },
-  { label: "Modules", href: "/modules", icon: Layers },
-  { label: "Quizzes", href: "/quizzes", icon: HelpCircle },
-  { label: "Fun Tasks", href: "/fun-tasks", icon: Gamepad2 },
+  { label: "Create Courses", href: "/create-courses", icon: BookOpen },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Settings", href: "/settings", icon: Settings },
 ]
@@ -82,8 +73,18 @@ export function AppSidebar() {
         </ul>
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="border-t border-sidebar-border p-3">
+      {/* Logout and Collapse */}
+      <div className="border-t border-sidebar-border p-3 space-y-2">
+        {/* Logout Button */}
+        <button
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          aria-label="Log out"
+        >
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          {!collapsed && <span>Logout</span>}
+        </button>
+
+        {/* Collapse Toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex w-full items-center justify-center rounded-lg py-2 text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
