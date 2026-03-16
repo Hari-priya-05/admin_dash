@@ -52,7 +52,8 @@ interface Course {
   name: string
   description: string
   instructions: string
-  dueDate?: string
+  duration?: string
+  department?: string
   termsAccepted: boolean
   modules: Module[]
   finalQuiz?: Quiz
@@ -79,7 +80,8 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
       name: "",
       description: "",
       instructions: "",
-      dueDate: "",
+      duration: "",
+      department: "",
       termsAccepted: false,
       modules: [],
       passingScore: 70,
@@ -175,19 +177,41 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
             />
           </div>
 
-          {/* Due Date */}
+          {/* Course Duration */}
           <div className="space-y-2">
-            <Label htmlFor="due-date" className="text-sm font-medium">
-              Course Due Date (Optional)
+            <Label htmlFor="duration" className="text-sm font-medium">
+              Course Duration (Optional)
             </Label>
             <Input
-              id="due-date"
-              type="date"
-              value={course.dueDate}
-              onChange={(e) => setCourse({ ...course, dueDate: e.target.value })}
+              id="duration"
+              placeholder="e.g., 8 weeks, 6 months, 12 weeks"
+              value={course.duration}
+              onChange={(e) => setCourse({ ...course, duration: e.target.value })}
               className="h-10"
             />
-            <p className="text-xs text-muted-foreground">Course will automatically close after the due date</p>
+            <p className="text-xs text-muted-foreground">Specify the expected duration for completing this course</p>
+          </div>
+
+          {/* Department Assignment */}
+          <div className="space-y-2">
+            <Label htmlFor="department" className="text-sm font-medium">
+              Department Assignment (Optional)
+            </Label>
+            <select
+              id="department"
+              value={course.department || ""}
+              onChange={(e) => setCourse({ ...course, department: e.target.value })}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">Select Department</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Data Science">Data Science</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Business">Business</option>
+              <option value="Medicine">Medicine</option>
+              <option value="Arts">Arts</option>
+            </select>
+            <p className="text-xs text-muted-foreground">Faculty from this department can be assigned to the course</p>
           </div>
 
           {/* Passing Score */}

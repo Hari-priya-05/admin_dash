@@ -2,10 +2,11 @@
 
 import { useState } from "react"
 import { DashboardShell } from "@/components/dashboard-shell"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChevronRight, Building2, Network, Users } from "lucide-react"
 
 type DrillLevel = "colleges" | "departments" | "faculties"
@@ -28,6 +29,25 @@ interface DepartmentReport {
   passRate: number
 }
 
+interface FacultyActivity {
+  id: string
+  type: "assignment" | "quiz" | "module_complete" | "enrollment"
+  description: string
+  date: string
+  score?: number
+}
+
+interface CourseDetail {
+  id: string
+  name: string
+  duration: string
+  modules: number
+  quizzes: number
+  description: string
+  completionDate?: string
+  score?: number
+}
+
 interface FacultyReport {
   name: string
   department: string
@@ -35,6 +55,10 @@ interface FacultyReport {
   completion: number
   avgScore: number
   passed: boolean
+  email?: string
+  joinDate?: string
+  activities?: FacultyActivity[]
+  assignedCourses?: CourseDetail[]
 }
 
 const collegeReports: CollegeReport[] = [
@@ -55,17 +79,104 @@ const departmentReports: DepartmentReport[] = [
 ]
 
 const facultyReports: FacultyReport[] = [
-  { name: "Dr. Alan Turing", department: "Computer Science", courses: 5, completion: 95, avgScore: 88, passed: true },
-  { name: "Dr. Grace Hopper", department: "Computer Science", courses: 6, completion: 92, avgScore: 82, passed: true },
-  { name: "Dr. Tim Berners-Lee", department: "Computer Science", courses: 4, completion: 88, avgScore: 76, passed: true },
-  { name: "Dr. Ada Lovelace", department: "Computer Science", courses: 3, completion: 65, avgScore: 58, passed: false },
-  { name: "Dr. Dennis Ritchie", department: "Computer Science", courses: 5, completion: 90, avgScore: 84, passed: true },
+  {
+    name: "Dr. Alan Turing",
+    department: "Computer Science",
+    courses: 5,
+    completion: 95,
+    avgScore: 88,
+    passed: true,
+    email: "alan.turing@university.edu",
+    joinDate: "2023-01-15",
+    activities: [
+      { id: "a1", type: "enrollment", description: "Enrolled in Web Development Course", date: "2024-01-10" },
+      { id: "a2", type: "module_complete", description: "Completed Module 1: HTML Basics", date: "2024-01-15", score: 92 },
+      { id: "a3", type: "quiz", description: "Completed Quiz: CSS Selectors", date: "2024-01-20", score: 85 },
+      { id: "a4", type: "assignment", description: "Submitted Assignment: Build Website", date: "2024-01-25", score: 90 },
+    ],
+    assignedCourses: [
+      { id: "c1", name: "Introduction to Web Development", duration: "8 weeks", modules: 5, quizzes: 12, description: "Learn HTML, CSS, and JavaScript basics", completionDate: "2024-02-28", score: 92 },
+      { id: "c2", name: "Advanced JavaScript", duration: "6 weeks", modules: 4, quizzes: 10, description: "Master ES6+ features", completionDate: "2024-03-15", score: 88 },
+    ],
+  },
+  {
+    name: "Dr. Grace Hopper",
+    department: "Computer Science",
+    courses: 6,
+    completion: 92,
+    avgScore: 82,
+    passed: true,
+    email: "grace.hopper@university.edu",
+    joinDate: "2023-02-20",
+    activities: [
+      { id: "a5", type: "enrollment", description: "Enrolled in Data Structures Course", date: "2024-01-12" },
+      { id: "a6", type: "module_complete", description: "Completed Module 2: Linked Lists", date: "2024-01-22", score: 88 },
+      { id: "a7", type: "quiz", description: "Completed Quiz: Trees and Graphs", date: "2024-02-05", score: 79 },
+    ],
+    assignedCourses: [
+      { id: "c3", name: "Data Structures & Algorithms", duration: "10 weeks", modules: 6, quizzes: 15, description: "Core computer science fundamentals", completionDate: "2024-04-10", score: 82 },
+    ],
+  },
+  {
+    name: "Dr. Tim Berners-Lee",
+    department: "Computer Science",
+    courses: 4,
+    completion: 88,
+    avgScore: 76,
+    passed: true,
+    email: "tim.bernerslee@university.edu",
+    joinDate: "2023-03-10",
+    activities: [
+      { id: "a8", type: "enrollment", description: "Enrolled in Web Technologies Course", date: "2024-01-08" },
+      { id: "a9", type: "module_complete", description: "Completed Module 1: HTTP Protocol", date: "2024-01-18", score: 84 },
+    ],
+    assignedCourses: [
+      { id: "c4", name: "Web Technologies & Architecture", duration: "8 weeks", modules: 5, quizzes: 11, description: "Understanding modern web infrastructure", completionDate: "2024-03-08", score: 76 },
+    ],
+  },
+  {
+    name: "Dr. Ada Lovelace",
+    department: "Computer Science",
+    courses: 3,
+    completion: 65,
+    avgScore: 58,
+    passed: false,
+    email: "ada.lovelace@university.edu",
+    joinDate: "2023-04-05",
+    activities: [
+      { id: "a10", type: "enrollment", description: "Enrolled in Programming Basics", date: "2024-01-20" },
+      { id: "a11", type: "module_complete", description: "Completed Module 1: Variables & Data Types", date: "2024-02-01", score: 65 },
+    ],
+    assignedCourses: [
+      { id: "c5", name: "Programming Fundamentals", duration: "12 weeks", modules: 8, quizzes: 16, description: "Introduction to programming concepts", score: 58 },
+    ],
+  },
+  {
+    name: "Dr. Dennis Ritchie",
+    department: "Computer Science",
+    courses: 5,
+    completion: 90,
+    avgScore: 84,
+    passed: true,
+    email: "dennis.ritchie@university.edu",
+    joinDate: "2023-05-01",
+    activities: [
+      { id: "a12", type: "enrollment", description: "Enrolled in Systems Programming", date: "2024-01-05" },
+      { id: "a13", type: "module_complete", description: "Completed Module 3: Memory Management", date: "2024-02-10", score: 91 },
+      { id: "a14", type: "quiz", description: "Completed Quiz: Pointers and Arrays", date: "2024-02-20", score: 87 },
+    ],
+    assignedCourses: [
+      { id: "c6", name: "Systems Programming with C", duration: "9 weeks", modules: 5, quizzes: 12, description: "Deep dive into low-level programming", completionDate: "2024-03-30", score: 84 },
+    ],
+  },
 ]
 
 export default function ReportsPage() {
   const [level, setLevel] = useState<DrillLevel>("colleges")
   const [selectedCollege, setSelectedCollege] = useState<string | null>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null)
+  const [selectedFaculty, setSelectedFaculty] = useState<FacultyReport | null>(null)
+  const [facultyDetailView, setFacultyDetailView] = useState<"overview" | "courses" | "activities">("overview")
 
   const handleCollegeClick = (college: string) => {
     setSelectedCollege(college)
@@ -75,10 +186,17 @@ export default function ReportsPage() {
   const handleDepartmentClick = (department: string) => {
     setSelectedDepartment(department)
     setLevel("faculties")
+    setSelectedFaculty(null)
+  }
+
+  const handleFacultyClick = (faculty: FacultyReport) => {
+    setSelectedFaculty(faculty)
   }
 
   const handleBreadcrumb = (target: DrillLevel) => {
     setLevel(target)
+    setSelectedFaculty(null)
+    setFacultyDetailView("overview")
     if (target === "colleges") {
       setSelectedCollege(null)
       setSelectedDepartment(null)
@@ -228,7 +346,7 @@ export default function ReportsPage() {
         )}
 
         {/* Faculty Level */}
-        {level === "faculties" && (
+        {level === "faculties" && !selectedFaculty && (
           <Card className="rounded-xl border-border/60 shadow-sm">
             <CardHeader>
               <CardTitle className="text-sm font-semibold text-foreground">Faculty Performance</CardTitle>
@@ -236,10 +354,14 @@ export default function ReportsPage() {
             <CardContent>
               <div className="flex flex-col gap-3">
                 {facultyReports.map((faculty) => (
-                  <div key={faculty.name} className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted/30">
+                  <div
+                    key={faculty.name}
+                    className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted/30 cursor-pointer"
+                    onClick={() => handleFacultyClick(faculty)}
+                  >
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground">{faculty.name}</p>
-                      <p className="text-xs text-muted-foreground">{faculty.courses} courses</p>
+                      <p className="text-xs text-muted-foreground">{faculty.courses} courses • {faculty.email}</p>
                     </div>
                     <div className="flex items-center gap-3 min-w-[200px]">
                       <Progress value={faculty.completion} className="h-2 flex-1" />
@@ -255,6 +377,156 @@ export default function ReportsPage() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Faculty Detail View */}
+        {selectedFaculty && (
+          <Card className="rounded-xl border-border/60 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg text-foreground">{selectedFaculty.name}</CardTitle>
+                  <CardDescription className="mt-1">
+                    {selectedFaculty.email} • Joined {selectedFaculty.joinDate}
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedFaculty(null)}
+                >
+                  Back
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Overview Stats */}
+              <Tabs
+                value={facultyDetailView}
+                onValueChange={(value: any) => setFacultyDetailView(value)}
+                className="w-full space-y-4"
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="courses">Assigned Courses</TabsTrigger>
+                  <TabsTrigger value="activities">Activities</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="rounded-lg bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Total Courses</p>
+                      <p className="text-2xl font-bold text-foreground">{selectedFaculty.courses}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Completion Rate</p>
+                      <p className="text-2xl font-bold text-foreground">{selectedFaculty.completion}%</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Average Score</p>
+                      <p className="text-2xl font-bold text-foreground">{selectedFaculty.avgScore}%</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-4">
+                      <p className="text-xs text-muted-foreground mb-1">Status</p>
+                      <p className="text-lg font-bold text-foreground">{selectedFaculty.passed ? "✓ Pass" : "✗ Fail"}</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border/50 pt-4">
+                    <p className="text-sm font-semibold text-foreground mb-3">Individual Faculty Progress</p>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Overall Progress</span>
+                          <span className="font-medium text-foreground">{selectedFaculty.completion}%</span>
+                        </div>
+                        <Progress value={selectedFaculty.completion} className="h-2" />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Score Performance</span>
+                          <span className="font-medium text-foreground">{selectedFaculty.avgScore}%</span>
+                        </div>
+                        <Progress value={selectedFaculty.avgScore} className="h-2" />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="courses" className="space-y-4">
+                  <div className="space-y-3">
+                    {selectedFaculty.assignedCourses && selectedFaculty.assignedCourses.length > 0 ? (
+                      selectedFaculty.assignedCourses.map((course) => (
+                        <div
+                          key={course.id}
+                          className="rounded-lg border border-border/50 p-4 space-y-3 hover:bg-muted/20 transition-colors"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground">{course.name}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{course.description}</p>
+                            </div>
+                            {course.score && (
+                              <Badge variant="outline" className="ml-2">
+                                Score: {course.score}%
+                              </Badge>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                            <div>
+                              <p className="text-muted-foreground">Duration</p>
+                              <p className="font-medium text-foreground">{course.duration}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Modules</p>
+                              <p className="font-medium text-foreground">{course.modules}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Quizzes</p>
+                              <p className="font-medium text-foreground">{course.quizzes}</p>
+                            </div>
+                            {course.completionDate && (
+                              <div>
+                                <p className="text-muted-foreground">Completed</p>
+                                <p className="font-medium text-foreground">{new Date(course.completionDate).toLocaleDateString()}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No assigned courses</p>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="activities" className="space-y-3">
+                  {selectedFaculty.activities && selectedFaculty.activities.length > 0 ? (
+                    selectedFaculty.activities.map((activity) => (
+                      <div key={activity.id} className="flex items-start gap-4 rounded-lg border border-border/50 p-4 hover:bg-muted/20 transition-colors">
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{activity.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{new Date(activity.date).toLocaleDateString()}</p>
+                        </div>
+                        {activity.score && (
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground">{activity.score}%</p>
+                            <p className="text-xs text-muted-foreground">Score</p>
+                          </div>
+                        )}
+                        <Badge variant="outline" className="ml-2">
+                          {activity.type.replace("_", " ")}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No activities recorded</p>
+                  )}
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}

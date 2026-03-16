@@ -2,11 +2,13 @@
 
 import { DashboardShell } from "@/components/dashboard-shell"
 import { CourseBuilder } from "@/components/courses/course-builder"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, Eye } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Pencil, Trash2, Calendar, Users, FileText } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface QuizQuestion {
   id: string
@@ -41,26 +43,111 @@ interface Course {
   name: string
   description: string
   instructions: string
-  dueDate?: string
+  duration?: string
+  department?: string
   termsAccepted: boolean
   modules: Module[]
   finalQuiz?: Quiz
   passingScore: number
+  createdAt?: string
+  status?: "ongoing" | "completed" | "upcoming"
 }
+
+// Mock data from recent courses
+const mockRecentCourses: Course[] = [
+  {
+    id: "course-1",
+    name: "Introduction to Web Development",
+    description: "Learn the basics of HTML, CSS, and JavaScript",
+    instructions: "Complete all modules and pass the final quiz with 70%",
+    duration: "8 weeks",
+    department: "Computer Science",
+    termsAccepted: true,
+    modules: [
+      {
+        id: "module-1",
+        name: "HTML Basics",
+        description: "Learn HTML fundamentals",
+        videos: [
+          { id: "v1", name: "Introduction to HTML", url: "https://example.com/v1.mp4" },
+          { id: "v2", name: "HTML Tags", url: "https://example.com/v2.mp4" },
+        ],
+        quizzes: [
+          {
+            id: "quiz-1",
+            title: "HTML Basics Quiz",
+            questions: [
+              {
+                id: "q1",
+                question: "What does HTML stand for?",
+                options: ["Hypertext Markup Language", "High Tech Modern Language", "Home Tool Markup Language", "Hyperlinks and Text Markup Language"],
+                correctAnswer: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    finalQuiz: {
+      id: "final-quiz-1",
+      title: "Web Development Final Exam",
+      questions: [],
+    },
+    passingScore: 70,
+    createdAt: "2024-01-15",
+    status: "ongoing",
+  },
+  {
+    id: "course-2",
+    name: "Advanced JavaScript",
+    description: "Deep dive into JavaScript ES6+ features",
+    instructions: "Master async/await, promises, and modern JavaScript patterns",
+    duration: "6 weeks",
+    department: "Computer Science",
+    termsAccepted: true,
+    modules: [
+      {
+        id: "module-3",
+        name: "ES6 Fundamentals",
+        description: "Learn arrow functions and destructuring",
+        videos: [
+          { id: "v5", name: "Arrow Functions", url: "https://example.com/v5.mp4" },
+        ],
+        quizzes: [],
+      },
+    ],
+    finalQuiz: {
+      id: "final-quiz-2",
+      title: "JavaScript Final Exam",
+      questions: [],
+    },
+    passingScore: 75,
+    createdAt: "2024-02-01",
+    status: "completed",
+  },
+]
 
 export default function CreateCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"all-courses" | "create">("all-courses")
+  const [searchQuery, setSearchQuery] = useState("")
+
+  useEffect(() => {
+    // Initialize with mock courses on first load
+    setCourses(mockRecentCourses)
+  }, [])
 
   const handleSaveCourse = (course: Course) => {
     if (editingId) {
       setCourses(courses.map((c) => (c.id === editingId ? course : c)))
       setEditingId(null)
     } else {
-      setCourses([...courses, course])
+      setCourses([...courses, { ...course, createdAt: new Date().toISOString(), status: "upcoming" }])
     }
     setIsCreating(false)
+    setActiveTab("all-courses")
   }
 
   const handleDeleteCourse = (courseId: string) => {
@@ -72,7 +159,26 @@ export default function CreateCoursesPage() {
   const handleEditCourse = (courseId: string) => {
     setEditingId(courseId)
     setIsCreating(true)
+    setActiveTab("create")
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const filteredCourses = courses.filter((course) =>
+    course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    course.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const getStatusBadgeColor = (status?: string) => {
+    switch (status) {
+      case "ongoing":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+      case "completed":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+      case "upcoming":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+    }
   }
 
   if (isCreating) {
@@ -87,28 +193,28 @@ export default function CreateCoursesPage() {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              Build your course with modules, videos, and tasks
+              Build your course with modules, videos, tasks, and department assignment
             </p>
           </div>
 
           <CourseBuilder
             courseId={editingId || undefined}
+            initialCourse={editingId ? courses.find((c) => c.id === editingId) : undefined}
             onSave={handleSaveCourse}
           />
 
-          {editingId && (
-            <div className="flex justify-start">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsCreating(false)
-                  setEditingId(null)
-                }}
-              >
-                Back to Courses
-              </Button>
-            </div>
-          )}
+          <div className="flex justify-start">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreating(false)
+                setEditingId(null)
+                setActiveTab("all-courses")
+              }}
+            >
+              Back to Courses
+            </Button>
+          </div>
         </div>
       </DashboardShell>
     )
@@ -120,121 +226,190 @@ export default function CreateCoursesPage() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Create Courses</h1>
+            <h1 className="text-2xl font-bold text-foreground">Course Management</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create and manage courses with modules, videos, and assignments
+              Create new courses and manage existing courses
             </p>
           </div>
-          <Button
-            onClick={() => {
-              setEditingId(null)
-              setIsCreating(true)
-            }}
-            className="gap-2"
-          >
-            + New Course
-          </Button>
         </div>
 
-        {/* Courses List */}
-        {courses.length === 0 ? (
-          <Card className="border-border/60">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="text-center space-y-2">
-                <p className="text-muted-foreground font-medium">No courses yet</p>
-                <p className="text-sm text-muted-foreground/70">
-                  Click "New Course" to create your first course
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {courses.map((course) => (
-              <Card
-                key={course.id}
-                className="border-border/60 hover:shadow-md transition-shadow"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{course.name}</CardTitle>
-                      <CardDescription className="mt-1 line-clamp-2">
-                        {course.description || "No description"}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="secondary">
-                      {course.modules.length} Module{course.modules.length !== 1 ? "s" : ""}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pb-3 space-y-4">
-                  {/* Course Meta */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-muted-foreground">
-                    <div>
-                      <span className="font-medium">Pass Score:</span> {course.passingScore}%
-                    </div>
-                    {course.dueDate && (
-                      <div>
-                        <span className="font-medium">Due:</span> {new Date(course.dueDate).toLocaleDateString()}
-                      </div>
-                    )}
-                    {course.finalQuiz && (
-                      <div>
-                        <span className="font-medium">✓ Final Quiz</span>
-                      </div>
-                    )}
-                  </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="all-courses" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              All Courses ({courses.length})
+            </TabsTrigger>
+            <TabsTrigger value="create" className="flex items-center gap-2">
+              Create New Course
+            </TabsTrigger>
+          </TabsList>
 
-                  {/* Modules Summary */}
-                  <div className="space-y-2 border-t border-border/50 pt-4">
-                    <p className="text-xs font-medium text-foreground">Modules:</p>
-                    <div className="space-y-1 max-h-20 overflow-y-auto">
-                      {course.modules.map((module) => (
-                        <div
-                          key={module.id}
-                          className="text-xs text-muted-foreground flex items-center gap-2 pl-0.5"
-                        >
-                          <span className="font-medium">{module.name}</span>
-                          <span>•</span>
-                          <span>
-                            {module.videos.length} video{module.videos.length !== 1 ? "s" : ""}
-                          </span>
-                          {module.quizzes && module.quizzes.length > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>{module.quizzes.length} quiz{module.quizzes.length !== 1 ? "zes" : ""}</span>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+          {/* All Courses Tab */}
+          <TabsContent value="all-courses" className="space-y-4">
+            {/* Search */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search courses..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9"
+              />
+              <Button
+                onClick={() => {
+                  setEditingId(null)
+                  setIsCreating(true)
+                  setActiveTab("create")
+                }}
+                className="gap-2"
+              >
+                + New Course
+              </Button>
+            </div>
+
+            {/* Courses List */}
+            {filteredCourses.length === 0 ? (
+              <Card className="border-border/60">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <div className="text-center space-y-2">
+                    <p className="text-muted-foreground font-medium">No courses found</p>
+                    <p className="text-sm text-muted-foreground/70">
+                      Try adjusting your search or create a new course
+                    </p>
                   </div>
                 </CardContent>
-                <div className="flex gap-2 justify-end border-t border-border/50 bg-muted/30 px-6 py-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => handleEditCourse(course.id)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-1 text-destructive hover:text-destructive"
-                    onClick={() => handleDeleteCourse(course.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </Button>
-                </div>
               </Card>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="space-y-3">
+                {filteredCourses.map((course) => (
+                  <Card
+                    key={course.id}
+                    className="border-border/60 hover:shadow-md transition-shadow overflow-hidden"
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg">{course.name}</CardTitle>
+                            <Badge className={getStatusBadgeColor(course.status)}>
+                              {course.status || "Unknown"}
+                            </Badge>
+                          </div>
+                          <CardDescription className="line-clamp-2">
+                            {course.description || "No description"}
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pb-4 space-y-4">
+                      {/* Course Meta Info */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <FileText className="h-4 w-4" />
+                          <span>{course.modules.length} Module{course.modules.length !== 1 ? "s" : ""}</span>
+                        </div>
+                        {course.duration && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>Duration: {course.duration}</span>
+                          </div>
+                        )}
+                        {course.department && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Users className="h-4 w-4" />
+                            <span>{course.department}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Module Summary */}
+                      <div className="space-y-2 border-t border-border/50 pt-4">
+                        <p className="text-xs font-medium text-foreground">Modules:</p>
+                        <div className="space-y-1 max-h-24 overflow-y-auto">
+                          {course.modules.slice(0, 3).map((module) => (
+                            <div
+                              key={module.id}
+                              className="text-xs text-muted-foreground flex items-center gap-2 pl-2"
+                            >
+                              <span className="font-medium">{module.name}</span>
+                              <span>•</span>
+                              <span>{module.videos.length} video{module.videos.length !== 1 ? "s" : ""}</span>
+                              {module.quizzes && module.quizzes.length > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span>{module.quizzes.length} quiz{module.quizzes.length !== 1 ? "zes" : ""}</span>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                          {course.modules.length > 3 && (
+                            <p className="text-xs text-muted-foreground/70 pl-2">
+                              +{course.modules.length - 3} more module{course.modules.length - 3 !== 1 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Final Quiz Info */}
+                      {course.finalQuiz && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 px-2 py-2 bg-muted/30 rounded">
+                          <span className="font-medium">✓ Final Quiz:</span>
+                          <span>{course.finalQuiz.questions.length} question{course.finalQuiz.questions.length !== 1 ? "s" : ""}</span>
+                        </div>
+                      )}
+                    </CardContent>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 justify-end border-t border-border/50 bg-muted/30 px-6 py-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => handleEditCourse(course.id)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-1 text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteCourse(course.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Create Course Tab */}
+          <TabsContent value="create" className="space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-2">Create New Course</h2>
+              <p className="text-sm text-muted-foreground">Fill in the details below to create a new course</p>
+            </div>
+
+            <CourseBuilder
+              onSave={handleSaveCourse}
+            />
+
+            <div className="flex justify-start">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setActiveTab("all-courses")
+                }}
+              >
+                Back to All Courses
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardShell>
   )
