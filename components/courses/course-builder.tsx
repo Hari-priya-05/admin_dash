@@ -53,6 +53,7 @@ interface Course {
 
 interface CourseBuilderProps {
   courseId?: string
+  initialCourse?: Course
   onSave?: (course: Course) => void
 }
 
@@ -63,17 +64,19 @@ const mockFunTasks = [
   { id: "4", name: "Quiz 2: Advanced Topics" },
 ]
 
-export function CourseBuilder({ courseId, onSave }: CourseBuilderProps) {
-  const [course, setCourse] = useState<Course>({
-    id: courseId || `course-${Date.now()}`,
-    name: "",
-    description: "",
-    instructions: "",
-    dueDate: "",
-    termsAccepted: false,
-    modules: [],
-    passingScore: 70,
-  })
+export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilderProps) {
+  const [course, setCourse] = useState<Course>(
+    initialCourse || {
+      id: courseId || `course-${Date.now()}`,
+      name: "",
+      description: "",
+      instructions: "",
+      dueDate: "",
+      termsAccepted: false,
+      modules: [],
+      passingScore: 70,
+    }
+  )
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
 
@@ -287,6 +290,96 @@ export function CourseBuilder({ courseId, onSave }: CourseBuilderProps) {
                 )}
               </div>
             ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Final Quiz Section */}
+      <Card className="border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Final Course Quiz</CardTitle>
+            <CardDescription>Create a final quiz at the end of the course</CardDescription>
+          </div>
+          {!course.finalQuiz && (
+            <Button 
+              onClick={() => setCourse({
+                ...course,
+                finalQuiz: {
+                  id: `final-quiz-${Date.now()}`,
+                  title: "Final Exam",
+                  questions: []
+                }
+              })} 
+              size="sm" 
+              variant="outline"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Final Quiz
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {!course.finalQuiz ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/50 py-12 text-center">
+              <p className="text-sm text-muted-foreground">No final quiz yet</p>
+              <p className="text-xs text-muted-foreground/60">Click "Create Final Quiz" to add a comprehensive final exam</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="final-quiz-title" className="text-sm font-medium">
+                  Final Quiz Title
+                </Label>
+                <Input
+                  id="final-quiz-title"
+                  placeholder="e.g., Final Exam"
+                  value={course.finalQuiz.title}
+                  onChange={(e) => setCourse({
+                    ...course,
+                    finalQuiz: {
+                      ...course.finalQuiz!,
+                      title: e.target.value
+                    }
+                  })}
+                  className="h-10"
+                />
+              </div>
+              
+              <div className="rounded-lg border border-border/30 bg-white dark:bg-slate-950 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">Questions: {course.finalQuiz.questions.length}</p>
+                  <Button size="sm" variant="outline" className="gap-1">
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Question
+                  </Button>
+                </div>
+                {course.finalQuiz.questions.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">
+                    No questions yet. Click "Add Question" to create questions for the final quiz.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {course.finalQuiz.questions.map((q, idx) => (
+                      <div key={q.id} className="text-xs text-muted-foreground p-2 bg-muted/30 rounded">
+                        <p className="font-medium">Q{idx + 1}: {q.question}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setCourse({ ...course, finalQuiz: undefined })}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Remove Final Quiz
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
