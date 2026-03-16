@@ -210,12 +210,6 @@ export default function ReportsPage() {
   return (
     <DashboardShell>
       <div className="flex flex-col gap-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Drill-down performance reports</p>
-        </div>
-
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm">
           <button

@@ -207,18 +207,6 @@ export default function CreateCoursesPage() {
     return (
       <DashboardShell>
         <div className="max-w-4xl mx-auto space-y-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              {editingId && <Badge variant="outline">Editing</Badge>}
-              <h1 className="text-2xl font-bold text-foreground">
-                {editingId ? "Edit Course" : "Create New Course"}
-              </h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Build your course with modules, videos, and assign to departments
-            </p>
-          </div>
-
           <CourseBuilder
             courseId={editingId || undefined}
             initialCourse={editingId ? courses.find((c) => c.id === editingId) : undefined}
@@ -407,16 +395,6 @@ export default function CreateCoursesPage() {
   return (
     <DashboardShell>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Course Management</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create new courses and manage existing courses
-            </p>
-          </div>
-        </div>
-
         {/* Search and Create Button */}
         <div className="flex gap-2">
           <Input
