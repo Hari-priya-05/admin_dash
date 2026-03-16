@@ -29,7 +29,6 @@ import {
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Course Progress", href: "/course-progress", icon: BarChart3 },
   { label: "Create Courses", href: "/create-courses", icon: BookOpen },
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Settings", href: "/settings", icon: Settings },

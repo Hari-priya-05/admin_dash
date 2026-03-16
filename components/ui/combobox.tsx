@@ -26,11 +26,12 @@ export interface ComboboxOption {
 
 interface ComboboxProps {
   options: ComboboxOption[]
-  value?: string
-  onValueChange?: (value: string) => void
+  value?: string | string[]
+  onValueChange?: (value: string | string[]) => void
   placeholder?: string
   searchPlaceholder?: string
   emptyText?: string
+  multiple?: boolean
 }
 
 export function Combobox({
@@ -40,11 +41,28 @@ export function Combobox({
   placeholder = 'Select option...',
   searchPlaceholder = 'Search...',
   emptyText = 'No options found.',
+  multiple = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [searchValue, setSearchValue] = React.useState('')
 
-  const selectedLabel = options.find((opt) => opt.value === value)?.label
+  const selectedValues = Array.isArray(value) ? value : (value ? [value] : [])
+  const selectedLabels = selectedValues
+    .map((val) => options.find((opt) => opt.value === val)?.label)
+    .filter(Boolean)
+
+  const handleSelect = (currentValue: string) => {
+    if (multiple) {
+      const newValues = selectedValues.includes(currentValue)
+        ? selectedValues.filter((v) => v !== currentValue)
+        : [...selectedValues, currentValue]
+      onValueChange?.(newValues)
+    } else {
+      onValueChange?.(currentValue === value ? '' : currentValue)
+      setOpen(false)
+      setSearchValue('')
+    }
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,7 +74,11 @@ export function Combobox({
           className="w-full justify-between"
         >
           <span className="truncate">
-            {selectedLabel || placeholder}
+            {selectedLabels.length > 0 
+              ? multiple 
+                ? `${selectedLabels.length} selected`
+                : selectedLabels[0]
+              : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -75,16 +97,12 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={(currentValue) => {
-                    onValueChange?.(currentValue === value ? '' : currentValue)
-                    setOpen(false)
-                    setSearchValue('')
-                  }}
+                  onSelect={handleSelect}
                 >
                   <Check
                     className={cn(
                       'mr-2 h-4 w-4',
-                      value === option.value ? 'opacity-100' : 'opacity-0',
+                      selectedValues.includes(option.value) ? 'opacity-100' : 'opacity-0',
                     )}
                   />
                   {option.label}

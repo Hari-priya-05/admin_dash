@@ -1,7 +1,7 @@
 "use client"
 
 import { DashboardShell } from "@/components/dashboard-shell"
-import { CourseBuilderModal } from "@/components/courses/course-builder-modal"
+import { CourseBuilder } from "@/components/courses/course-builder"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -44,7 +44,7 @@ interface Course {
   description: string
   instructions: string
   duration?: string
-  department?: string
+  departments?: string[]
   termsAccepted: boolean
   modules: Module[]
   finalQuiz?: Quiz
@@ -152,7 +152,7 @@ const mockRecentCourses: Course[] = [
 
 export default function CreateCoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -169,7 +169,7 @@ export default function CreateCoursesPage() {
     } else {
       setCourses([...courses, { ...course, createdAt: new Date().toISOString(), status: "upcoming" }])
     }
-    setIsModalOpen(false)
+    setIsCreating(false)
   }
 
   const handleDeleteCourse = (courseId: string) => {
@@ -180,7 +180,8 @@ export default function CreateCoursesPage() {
 
   const handleEditCourse = (courseId: string) => {
     setEditingId(courseId)
-    setIsModalOpen(true)
+    setIsCreating(true)
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const filteredCourses = courses.filter((course) =>
@@ -199,6 +200,47 @@ export default function CreateCoursesPage() {
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
     }
+  }
+
+  // Course Form View
+  if (isCreating) {
+    return (
+      <DashboardShell>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              {editingId && <Badge variant="outline">Editing</Badge>}
+              <h1 className="text-2xl font-bold text-foreground">
+                {editingId ? "Edit Course" : "Create New Course"}
+              </h1>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Build your course with modules, videos, and assign to departments
+            </p>
+          </div>
+
+          <CourseBuilder
+            courseId={editingId || undefined}
+            initialCourse={editingId ? courses.find((c) => c.id === editingId) : undefined}
+            onSave={handleSaveCourse}
+          />
+
+          {editingId && (
+            <div className="flex justify-start">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsCreating(false)
+                  setEditingId(null)
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+        </div>
+      </DashboardShell>
+    )
   }
 
   // Course Detail View
@@ -266,8 +308,16 @@ export default function CreateCoursesPage() {
                   <p className="text-foreground mt-1">{selectedCourse.duration || "Not specified"}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground font-medium">Department</p>
-                  <p className="text-foreground mt-1">{selectedCourse.department || "All"}</p>
+                  <p className="text-muted-foreground font-medium">Departments</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {selectedCourse.departments && selectedCourse.departments.length > 0 ? (
+                      selectedCourse.departments.map((dept) => (
+                        <Badge key={dept} variant="secondary">{dept}</Badge>
+                      ))
+                    ) : (
+                      <p className="text-foreground">All Departments</p>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-muted-foreground font-medium">Passing Score</p>
@@ -378,7 +428,8 @@ export default function CreateCoursesPage() {
           <Button
             onClick={() => {
               setEditingId(null)
-              setIsModalOpen(true)
+              setIsCreating(true)
+              window.scrollTo({ top: 0, behavior: "smooth" })
             }}
             className="gap-2"
           >
@@ -440,10 +491,10 @@ export default function CreateCoursesPage() {
                           <span>Duration: {course.duration}</span>
                         </div>
                       )}
-                      {course.department && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
+                      {course.departments && course.departments.length > 0 && (
+                        <div className="flex items-center gap-2 text-muted-foreground col-span-1 sm:col-span-2">
                           <Users className="h-4 w-4" />
-                          <span>{course.department}</span>
+                          <span>{course.departments.length} Dept{course.departments.length !== 1 ? "s" : ""}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-muted-foreground">
@@ -518,14 +569,6 @@ export default function CreateCoursesPage() {
         )}
       </div>
 
-      {/* Course Builder Modal */}
-      <CourseBuilderModal
-        isOpen={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onSave={handleSaveCourse}
-        editingCourse={editingId ? courses.find((c) => c.id === editingId) : undefined}
-        editingId={editingId}
-      />
     </DashboardShell>
   )
 }

@@ -54,7 +54,7 @@ interface Course {
   description: string
   instructions: string
   duration?: string
-  department?: string
+  departments?: string[]
   termsAccepted: boolean
   modules: Module[]
   finalQuiz?: Quiz
@@ -91,7 +91,7 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
       description: "",
       instructions: "",
       duration: "",
-      department: "",
+      departments: [],
       termsAccepted: false,
       modules: [],
       passingScore: 70,
@@ -205,16 +205,43 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
           {/* Department Assignment */}
           <div className="space-y-2">
             <Label htmlFor="department" className="text-sm font-medium">
-              Department Assignment (Optional)
+              Assign Departments (Optional)
             </Label>
             <Combobox
               options={departmentOptions}
-              value={course.department || ""}
-              onValueChange={(value) => setCourse({ ...course, department: value })}
-              placeholder="Select a department..."
+              value={course.departments || []}
+              onValueChange={(value) => setCourse({ ...course, departments: value as string[] })}
+              placeholder="Select departments..."
               searchPlaceholder="Search departments..."
+              multiple={true}
             />
-            <p className="text-xs text-muted-foreground">Faculty from this department can be assigned to the course</p>
+            {course.departments && course.departments.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {course.departments.map((dept) => {
+                  const deptLabel = departmentOptions.find((opt) => opt.value === dept)?.label
+                  return (
+                    <div
+                      key={dept}
+                      className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground"
+                    >
+                      {deptLabel}
+                      <button
+                        onClick={() =>
+                          setCourse({
+                            ...course,
+                            departments: (course.departments || []).filter((d) => d !== dept),
+                          })
+                        }
+                        className="ml-1 text-muted-foreground hover:text-foreground"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">Faculty from these departments can be assigned to the course</p>
           </div>
 
           {/* Passing Score */}
