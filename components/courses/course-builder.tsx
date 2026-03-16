@@ -7,8 +7,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, ChevronDown, ChevronUp, Trash2 } from "lucide-react"
+import { Plus, ChevronDown, ChevronUp, Trash2, Edit2 } from "lucide-react"
 import { ModuleSection } from "./module-section"
+import { QuizBuilder } from "./quiz-builder"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Module {
   id: string
@@ -79,6 +87,7 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
   )
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
+  const [isFinalQuizDialogOpen, setIsFinalQuizDialogOpen] = useState(false)
 
   const handleAddModule = () => {
     const newModule: Module = {
@@ -303,14 +312,18 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
           </div>
           {!course.finalQuiz && (
             <Button 
-              onClick={() => setCourse({
-                ...course,
-                finalQuiz: {
-                  id: `final-quiz-${Date.now()}`,
-                  title: "Final Exam",
-                  questions: []
-                }
-              })} 
+              onClick={() => {
+                setCourse({
+                  ...course,
+                  finalQuiz: {
+                    id: `final-quiz-${Date.now()}`,
+                    title: "Final Exam",
+                    questions: [],
+                    passingScore: 70
+                  }
+                })
+                setIsFinalQuizDialogOpen(true)
+              }} 
               size="sm" 
               variant="outline"
               className="gap-2"
@@ -328,46 +341,22 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="final-quiz-title" className="text-sm font-medium">
-                  Final Quiz Title
-                </Label>
-                <Input
-                  id="final-quiz-title"
-                  placeholder="e.g., Final Exam"
-                  value={course.finalQuiz.title}
-                  onChange={(e) => setCourse({
-                    ...course,
-                    finalQuiz: {
-                      ...course.finalQuiz!,
-                      title: e.target.value
-                    }
-                  })}
-                  className="h-10"
-                />
-              </div>
-              
               <div className="rounded-lg border border-border/30 bg-white dark:bg-slate-950 p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium">Questions: {course.finalQuiz.questions.length}</p>
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Question
+                  <div>
+                    <p className="text-sm font-medium">{course.finalQuiz.title}</p>
+                    <p className="text-xs text-muted-foreground">{course.finalQuiz.questions.length} questions</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsFinalQuizDialogOpen(true)}
+                    className="gap-1"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    Edit
                   </Button>
                 </div>
-                {course.finalQuiz.questions.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-8">
-                    No questions yet. Click "Add Question" to create questions for the final quiz.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {course.finalQuiz.questions.map((q, idx) => (
-                      <div key={q.id} className="text-xs text-muted-foreground p-2 bg-muted/30 rounded">
-                        <p className="font-medium">Q{idx + 1}: {q.question}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <Button
@@ -383,6 +372,26 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
           )}
         </CardContent>
       </Card>
+
+      {/* Final Quiz Dialog */}
+      <Dialog open={isFinalQuizDialogOpen} onOpenChange={setIsFinalQuizDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Final Course Quiz Builder</DialogTitle>
+            <DialogDescription>Create and manage final exam questions with options and images</DialogDescription>
+          </DialogHeader>
+          {course.finalQuiz && (
+            <QuizBuilder
+              quiz={course.finalQuiz}
+              onSave={(savedQuiz) => {
+                setCourse({ ...course, finalQuiz: savedQuiz })
+                setIsFinalQuizDialogOpen(false)
+              }}
+              isModuleQuiz={false}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Save Button */}
       <div className="flex justify-end gap-3">

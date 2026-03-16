@@ -326,14 +326,16 @@ export function QuizBuilder({ quiz, onSave, isModuleQuiz = false }: QuizBuilderP
       </Dialog>
 
       {/* Save Button */}
-      {!isModuleQuiz && (
-        <div className="flex justify-end gap-3">
-          <Button variant="outline">Cancel</Button>
-          <Button onClick={() => onSave?.(currentQuiz)} className="gap-2">
-            Save Quiz
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-end gap-3">
+        <Button variant="outline" onClick={() => {
+          // Reset form or close dialog
+        }}>
+          Cancel
+        </Button>
+        <Button onClick={() => onSave?.(currentQuiz)} className="gap-2">
+          Save Quiz
+        </Button>
+      </div>
     </div>
   )
 }

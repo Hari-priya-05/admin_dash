@@ -4,8 +4,16 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Edit2 } from "lucide-react"
 import { VideoItem } from "./video-item"
+import { QuizBuilder } from "./quiz-builder"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Video {
   id: string
@@ -14,10 +22,27 @@ interface Video {
   funTaskId?: string
 }
 
+interface QuizQuestion {
+  id: string
+  question: string
+  imageUrl?: string
+  options: string[]
+  correctAnswer: number
+}
+
+interface Quiz {
+  id: string
+  title: string
+  questions: QuizQuestion[]
+  passingScore?: number
+}
+
 interface Module {
   id: string
   name: string
+  description?: string
   videos: Video[]
+  quizzes?: Quiz[]
 }
 
 interface ModuleSectionProps {
@@ -27,6 +52,9 @@ interface ModuleSectionProps {
 }
 
 export function ModuleSection({ module, onUpdate, funTasks }: ModuleSectionProps) {
+  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false)
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null)
+
   const handleNameChange = (name: string) => {
     onUpdate({ ...module, name })
   }
@@ -57,16 +85,48 @@ export function ModuleSection({ module, onUpdate, funTasks }: ModuleSectionProps
     })
   }
 
-  const handleAddQuiz = () => {
-    const newQuiz = {
+  const handleCreateQuiz = () => {
+    const newQuiz: Quiz = {
       id: `quiz-${Date.now()}`,
       title: "Module Quiz",
       questions: [],
+      passingScore: 70,
     }
+    setEditingQuiz(newQuiz)
+    setIsQuizDialogOpen(true)
+  }
+
+  const handleEditQuiz = (quiz: Quiz) => {
+    setEditingQuiz(quiz)
+    setIsQuizDialogOpen(true)
+  }
+
+  const handleSaveQuiz = (savedQuiz: Quiz) => {
+    const existingIndex = (module.quizzes || []).findIndex((q) => q.id === savedQuiz.id)
+    let updatedQuizzes: Quiz[]
+
+    if (existingIndex >= 0) {
+      updatedQuizzes = [...(module.quizzes || [])]
+      updatedQuizzes[existingIndex] = savedQuiz
+    } else {
+      updatedQuizzes = [...(module.quizzes || []), savedQuiz]
+    }
+
     onUpdate({
       ...module,
-      quizzes: [...(module.quizzes || []), newQuiz],
+      quizzes: updatedQuizzes,
     })
+    setIsQuizDialogOpen(false)
+    setEditingQuiz(null)
+  }
+
+  const handleDeleteQuiz = () => {
+    onUpdate({
+      ...module,
+      quizzes: [],
+    })
+    setIsQuizDialogOpen(false)
+    setEditingQuiz(null)
   }
 
   return (
@@ -136,7 +196,7 @@ export function ModuleSection({ module, onUpdate, funTasks }: ModuleSectionProps
         <div className="flex items-center justify-between">
           <Label className="text-sm font-medium">Module Quiz</Label>
           {!module.quizzes || module.quizzes.length === 0 ? (
-            <Button onClick={handleAddQuiz} size="sm" variant="outline" className="gap-1">
+            <Button onClick={handleCreateQuiz} size="sm" variant="outline" className="gap-1">
               <Plus className="h-3.5 w-3.5" />
               Create Quiz
             </Button>
@@ -150,14 +210,41 @@ export function ModuleSection({ module, onUpdate, funTasks }: ModuleSectionProps
           </div>
         ) : (
           <div className="rounded-lg border border-border/30 bg-white dark:bg-slate-950 p-3 space-y-3">
-            <p className="text-sm font-medium">{module.quizzes[0].title}</p>
-            <p className="text-xs text-muted-foreground">{module.quizzes[0].questions.length} questions</p>
-            <Button size="sm" variant="outline" className="w-full">
-              Edit Quiz
-            </Button>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">{module.quizzes[0].title}</p>
+                <p className="text-xs text-muted-foreground">{module.quizzes[0].questions.length} questions</p>
+              </div>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => handleEditQuiz(module.quizzes![0])}
+                className="gap-1"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+                Edit
+              </Button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Quiz Dialog */}
+      <Dialog open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Module Quiz Builder</DialogTitle>
+            <DialogDescription>Create and manage quiz questions with options and images</DialogDescription>
+          </DialogHeader>
+          {editingQuiz && (
+            <QuizBuilder
+              quiz={editingQuiz}
+              onSave={handleSaveQuiz}
+              isModuleQuiz={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
