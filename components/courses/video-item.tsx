@@ -10,13 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Trash2 } from "lucide-react"
+import { Trash2, GripVertical } from "lucide-react"
 
 interface Video {
   id: string
   name: string
   url: string
   funTaskId?: string
+}
+
+interface DragHandleProps {
+  attributes: Record<string, unknown>
+  listeners: Record<string, unknown> | undefined
 }
 
 interface VideoItemProps {
@@ -26,6 +31,7 @@ interface VideoItemProps {
   onUpdate: (video: Video) => void
   onDelete: () => void
   funTasks: Array<{ id: string; name: string }>
+  dragHandleProps?: DragHandleProps
 }
 
 export function VideoItem({
@@ -35,11 +41,23 @@ export function VideoItem({
   onUpdate,
   onDelete,
   funTasks,
+  dragHandleProps,
 }: VideoItemProps) {
   return (
     <div className="space-y-3 rounded-lg border border-border/30 bg-white dark:bg-slate-950 p-3">
-      {/* Video Number */}
-      <p className="text-xs font-semibold text-muted-foreground">Video {videoIndex + 1}</p>
+      {/* Video Header with Drag Handle */}
+      <div className="flex items-center gap-2">
+        {dragHandleProps && (
+          <button
+            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted"
+            {...dragHandleProps.attributes}
+            {...dragHandleProps.listeners}
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+        <p className="text-xs font-semibold text-muted-foreground">Video {videoIndex + 1}</p>
+      </div>
 
       {/* Two column layout for name and URL */}
       <div className="grid grid-cols-2 gap-3">

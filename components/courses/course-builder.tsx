@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Plus, ChevronDown, ChevronUp, Trash2, Edit2 } from "lucide-react"
+import { Plus, ChevronDown, ChevronUp, Trash2, Edit2, GripVertical } from "lucide-react"
 import { ModuleSection } from "./module-section"
 import { QuizBuilder } from "./quiz-builder"
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox"
@@ -18,6 +18,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 interface Module {
   id: string
@@ -83,6 +100,90 @@ const departmentOptions: ComboboxOption[] = [
   { value: "arts", label: "Arts" },
 ]
 
+interface SortableModuleItemProps {
+  module: Module
+  isExpanded: boolean
+  onToggleExpand: () => void
+  onDelete: () => void
+  onUpdate: (updated: Module) => void
+  funTasks: Array<{ id: string; name: string }>
+}
+
+function SortableModuleItem({
+  module,
+  isExpanded,
+  onToggleExpand,
+  onDelete,
+  onUpdate,
+  funTasks,
+}: SortableModuleItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: module.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className="space-y-2">
+      <div
+        className="flex items-center justify-between rounded-lg border border-border/50 p-4 hover:bg-muted/30 transition-colors"
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <button
+            className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
+          </button>
+          <button
+            onClick={onToggleExpand}
+            className="flex items-center gap-3 flex-1 min-w-0"
+          >
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
+            )}
+            <span className="text-sm font-medium truncate">
+              {module.name || "Untitled Module"}
+            </span>
+            <span className="text-xs text-muted-foreground ml-auto shrink-0">
+              {module.videos.length} video{module.videos.length !== 1 ? "s" : ""}
+            </span>
+          </button>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDelete}
+          className="text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Expanded Module Content */}
+      {isExpanded && (
+        <ModuleSection
+          module={module}
+          onUpdate={onUpdate}
+          funTasks={funTasks}
+        />
+      )}
+    </div>
+  )
+}
+
 export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilderProps) {
   const [course, setCourse] = useState<Course>(
     initialCourse || {
@@ -100,6 +201,27 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
   const [isFinalQuizDialogOpen, setIsFinalQuizDialogOpen] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleModuleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = course.modules.findIndex((m) => m.id === active.id)
+      const newIndex = course.modules.findIndex((m) => m.id === over.id)
+
+      setCourse({
+        ...course,
+        modules: arrayMove(course.modules, oldIndex, newIndex),
+      })
+    }
+  }
 
   const handleAddModule = () => {
     const newModule: Module = {
@@ -311,48 +433,28 @@ export function CourseBuilder({ courseId, initialCourse, onSave }: CourseBuilder
               <p className="text-xs text-muted-foreground/60">Click "Add Module" to create your first module</p>
             </div>
           ) : (
-            course.modules.map((module) => (
-              <div key={module.id} className="space-y-2">
-                <div
-                  className="flex items-center justify-between rounded-lg border border-border/50 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
-                  onClick={() => toggleModuleExpand(module.id)}
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {expandedModules.has(module.id) ? (
-                      <ChevronUp className="h-5 w-5 shrink-0 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
-                    )}
-                    <span className="text-sm font-medium truncate">
-                      {module.name || "Untitled Module"}
-                    </span>
-                    <span className="text-xs text-muted-foreground ml-auto shrink-0">
-                      {module.videos.length} video{module.videos.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteModule(module.id)
-                    }}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Expanded Module Content */}
-                {expandedModules.has(module.id) && (
-                  <ModuleSection
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleModuleDragEnd}
+            >
+              <SortableContext
+                items={course.modules.map((m) => m.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {course.modules.map((module) => (
+                  <SortableModuleItem
+                    key={module.id}
                     module={module}
+                    isExpanded={expandedModules.has(module.id)}
+                    onToggleExpand={() => toggleModuleExpand(module.id)}
+                    onDelete={() => handleDeleteModule(module.id)}
                     onUpdate={(updated) => handleUpdateModule(module.id, updated)}
                     funTasks={mockFunTasks}
                   />
-                )}
-              </div>
-            ))
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2, Edit2 } from "lucide-react"
+import { Plus, Trash2, Edit2, GripVertical } from "lucide-react"
 import { VideoItem } from "./video-item"
 import { QuizBuilder } from "./quiz-builder"
 import {
@@ -14,6 +14,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 interface Video {
   id: string
@@ -51,9 +68,77 @@ interface ModuleSectionProps {
   funTasks: Array<{ id: string; name: string }>
 }
 
+interface SortableVideoItemProps {
+  video: Video
+  videoIndex: number
+  moduleId: string
+  onUpdate: (video: Video) => void
+  onDelete: () => void
+  funTasks: Array<{ id: string; name: string }>
+}
+
+function SortableVideoItem({
+  video,
+  videoIndex,
+  moduleId,
+  onUpdate,
+  onDelete,
+  funTasks,
+}: SortableVideoItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: video.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <VideoItem
+        video={video}
+        videoIndex={videoIndex}
+        moduleId={moduleId}
+        onUpdate={onUpdate}
+        onDelete={onDelete}
+        funTasks={funTasks}
+        dragHandleProps={{ attributes, listeners }}
+      />
+    </div>
+  )
+}
+
 export function ModuleSection({ module, onUpdate, funTasks }: ModuleSectionProps) {
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false)
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleVideoDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = module.videos.findIndex((v) => v.id === active.id)
+      const newIndex = module.videos.findIndex((v) => v.id === over.id)
+
+      onUpdate({
+        ...module,
+        videos: arrayMove(module.videos, oldIndex, newIndex),
+      })
+    }
+  }
 
   const handleNameChange = (name: string) => {
     onUpdate({ ...module, name })
@@ -175,19 +260,30 @@ export function ModuleSection({ module, onUpdate, funTasks }: ModuleSectionProps
             <p className="text-xs text-muted-foreground/60">Click "Add Video" to add your first video</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {module.videos.map((video, index) => (
-              <VideoItem
-                key={video.id}
-                video={video}
-                videoIndex={index}
-                moduleId={module.id}
-                onUpdate={(updated) => handleUpdateVideo(video.id, updated)}
-                onDelete={() => handleDeleteVideo(video.id)}
-                funTasks={funTasks}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleVideoDragEnd}
+          >
+            <SortableContext
+              items={module.videos.map((v) => v.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {module.videos.map((video, index) => (
+                  <SortableVideoItem
+                    key={video.id}
+                    video={video}
+                    videoIndex={index}
+                    moduleId={module.id}
+                    onUpdate={(updated) => handleUpdateVideo(video.id, updated)}
+                    onDelete={() => handleDeleteVideo(video.id)}
+                    funTasks={funTasks}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
