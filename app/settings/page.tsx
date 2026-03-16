@@ -16,18 +16,67 @@ export default function SettingsPage() {
   return (
     <DashboardShell>
       <div className="flex flex-col gap-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage your LMS configuration and preferences</p>
-        </div>
-
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs defaultValue="profile" className="w-full">
           <TabsList>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
+
+          {/* Profile Settings */}
+          <TabsContent value="profile">
+            <div className="grid gap-6">
+              <Card className="rounded-xl border-border/60 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-base font-semibold text-foreground">Profile Information</CardTitle>
+                  <CardDescription>Update your personal profile details</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="flex items-center gap-6 pb-4 border-b border-border/50">
+                    <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center">
+                      <span className="text-2xl font-bold text-muted-foreground">AD</span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button variant="outline" className="w-fit">Change Avatar</Button>
+                      <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max 10MB</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="full-name">Full Name</Label>
+                    <Input id="full-name" defaultValue="Admin User" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input id="email" type="email" defaultValue="admin@eduadmin.com" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="designation">Designation</Label>
+                      <Input id="designation" defaultValue="LMS Administrator" />
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <textarea
+                      id="bio"
+                      className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Tell us about yourself..."
+                      defaultValue="Experienced educational administrator managing the learning platform"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline">Cancel</Button>
+                    <Button>Save Profile</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           {/* General Settings */}
           <TabsContent value="general">

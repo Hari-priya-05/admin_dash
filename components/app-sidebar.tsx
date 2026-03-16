@@ -1,12 +1,12 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   BookOpen,
   BarChart3,
-  Settings,
   GraduationCap,
   ChevronLeft,
   ChevronRight,
@@ -14,10 +14,14 @@ import {
   Sun,
   Moon,
   Monitor,
+  Settings,
+  User,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { useTheme } from "next-themes"
+import { useSidebar } from "@/contexts/sidebar-context"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,14 +35,14 @@ const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Create Courses", href: "/create-courses", icon: BookOpen },
   { label: "Reports", href: "/reports", icon: BarChart3 },
-  { label: "Settings", href: "/settings", icon: Settings },
 ]
 
 export function AppSidebar() {
+  const router = useRouter()
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+  const { collapsed, toggleCollapsed } = useSidebar()
 
   useEffect(() => {
     setIsMounted(true)
@@ -89,7 +93,7 @@ export function AppSidebar() {
         </ul>
       </nav>
 
-      {/* Logout and Theme Toggle */}
+      {/* Bottom Section: Theme and Profile */}
       <div className="border-t border-sidebar-border p-3 space-y-2">
         {/* Theme Toggle */}
         {isMounted && (
@@ -128,18 +132,39 @@ export function AppSidebar() {
           </DropdownMenu>
         )}
 
-        {/* Logout Button */}
-        <button
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          aria-label="Log out"
-        >
-          <LogOut className="h-[18px] w-[18px] shrink-0" />
-          {!collapsed && <span>Logout</span>}
-        </button>
+        {/* Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground">
+              <Avatar className="h-6 w-6 shrink-0">
+                <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" />
+                <AvatarFallback>AD</AvatarFallback>
+              </Avatar>
+              {!collapsed && <span className="flex-1 text-left">Admin User</span>}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align={collapsed ? "center" : "end"} className="w-48">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/logout")}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Collapse Toggle */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => toggleCollapsed()}
           className="flex w-full items-center justify-center rounded-lg py-2 text-sidebar-foreground/50 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
