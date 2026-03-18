@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
-import { Pencil, Trash2, Calendar, Users, FileText, ArrowLeft, ChevronRight, ChevronDown } from "lucide-react"
+import { Pencil, Trash2, ArrowLeft } from "lucide-react"
 
 interface QuizQuestion {
   id: string
@@ -156,11 +156,6 @@ export default function CreateCoursesPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null)
-
-  const toggleCourseExpand = (courseId: string) => {
-    setExpandedCourseId(expandedCourseId === courseId ? null : courseId)
-  }
 
   useEffect(() => {
     // Initialize with mock courses on first load
@@ -434,152 +429,46 @@ export default function CreateCoursesPage() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {filteredCourses.map((course) => {
-              const facultyProgress = getFacultyProgressForCourse(course.id)
-              const completedCount = facultyProgress.filter(f => f.status === "completed").length
-              const overallProgress = Math.round(facultyProgress.reduce((sum, f) => sum + f.progress, 0) / facultyProgress.length)
-              const isExpanded = expandedCourseId === course.id
-
-              return (
-                <Card
-                  key={course.id}
-                  className="border-border/60 overflow-hidden"
+            {filteredCourses.map((course) => (
+              <div
+                key={course.id}
+                className="flex items-center justify-between px-4 py-3 rounded-lg border border-border/60 bg-card hover:bg-muted/30 transition-colors"
+              >
+                <button
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                  onClick={() => setSelectedCourse(course)}
                 >
-                  {/* Collapsed Header - Course Name Only */}
-                  <div
-                    className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
-                    onClick={() => toggleCourseExpand(course.id)}
+                  <span className="font-medium text-foreground truncate">{course.name}</span>
+                  <Badge className={`${getStatusBadgeColor(course.status)} shrink-0`}>
+                    {course.status || "Unknown"}
+                  </Badge>
+                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEditCourse(course.id)
+                    }}
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {isExpanded ? (
-                        <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-                      )}
-                      <span className="font-medium text-foreground truncate">{course.name}</span>
-                      <Badge className={`${getStatusBadgeColor(course.status)} shrink-0`}>
-                        {course.status || "Unknown"}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-muted-foreground hidden sm:inline">
-                        {course.modules.length} module{course.modules.length !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Expanded Content */}
-                  {isExpanded && (
-                    <>
-                      <CardContent className="pt-0 pb-4 space-y-4 border-t border-border/50">
-                        {/* Description */}
-                        <div className="pt-4">
-                          <p className="text-sm text-muted-foreground">
-                            {course.description || "No description"}
-                          </p>
-                        </div>
-
-                        {/* Course Meta Info */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <FileText className="h-4 w-4" />
-                            <span>{course.modules.length} Module{course.modules.length !== 1 ? "s" : ""}</span>
-                          </div>
-                          {course.duration && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                              <span>{course.duration}</span>
-                            </div>
-                          )}
-                          {course.departments && course.departments.length > 0 && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Users className="h-4 w-4" />
-                              <span>{course.departments.length} Dept{course.departments.length !== 1 ? "s" : ""}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{facultyProgress.length} Faculty</span>
-                          </div>
-                        </div>
-
-                        {/* Course Progress Section */}
-                        <div className="space-y-3 border-t border-border/50 pt-4">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-semibold text-foreground">Course Progress</p>
-                            <span className="text-xs font-medium text-muted-foreground">{completedCount}/{facultyProgress.length} Completed</span>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground">Overall Completion</span>
-                              <span className="font-medium text-foreground">{overallProgress}%</span>
-                            </div>
-                            <Progress value={overallProgress} className="h-2" />
-                          </div>
-                        </div>
-
-                        {/* Faculty Summary */}
-                        <div className="grid grid-cols-3 gap-2 text-center text-xs bg-muted/30 rounded-lg p-3">
-                          <div>
-                            <p className="text-muted-foreground font-medium">Completed</p>
-                            <p className="text-lg font-semibold text-foreground mt-1">{completedCount}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground font-medium">In Progress</p>
-                            <p className="text-lg font-semibold text-foreground mt-1">{facultyProgress.filter(f => f.status === "in-progress").length}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground font-medium">Not Started</p>
-                            <p className="text-lg font-semibold text-foreground mt-1">{facultyProgress.filter(f => f.status === "not-started").length}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-
-                      {/* Actions */}
-                      <div className="flex gap-2 justify-between border-t border-border/50 bg-muted/30 px-4 py-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedCourse(course)
-                          }}
-                        >
-                          View Details
-                        </Button>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleEditCourse(course.id)
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1 text-destructive hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteCourse(course.id)
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </Card>
-              )
-            })}
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteCourse(course.id)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
